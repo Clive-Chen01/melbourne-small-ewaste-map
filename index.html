@@ -34,6 +34,7 @@ L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x
   attribution: '&copy; OpenStreetMap &copy; Carto'
 }).addTo(map);
 
+
 // Helper to build Google Maps directions URL
 function navUrl(lat, lng) {
   let origin = 'Current+Location';
@@ -42,7 +43,6 @@ function navUrl(lat, lng) {
   }
   return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${lat},${lng}`;
 }
-  
 // Marker icons
 const greenIcon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -53,7 +53,7 @@ const greenIcon = L.icon({
 // Add markers
 const markerGroup = L.layerGroup().addTo(map);
 DATA.markers.forEach(m => {
-  const popup = `<b>${m.name}</b>${m.desc ? '<br/>' + m.desc : ''}`;
+  const popup = `<b>${m.name}</b>${m.desc ? '<br/>' + m.desc : ''}` + `<br/><a href='${navUrl(m.lat, m.lng)}' target='_blank' rel='noopener'>Click here to navigate</a>`;
   L.marker([m.lat, m.lng], { icon: greenIcon }).bindPopup(popup).addTo(markerGroup);
 });
 
@@ -129,6 +129,7 @@ locateControl.onAdd = function() {
 locateControl.addTo(map);
 
 function success(pos) {
+  window.__userLoc = { lat: latitude, lng: longitude }; // store for navigation links
   const { latitude, longitude } = pos.coords;
   const user = L.latLng(latitude, longitude);
   L.circleMarker(user, { radius: 7 }).addTo(map).bindPopup('You are here').openPopup();
