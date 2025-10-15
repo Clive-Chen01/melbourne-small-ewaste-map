@@ -53,8 +53,30 @@ const greenIcon = L.icon({
 // Add markers
 const markerGroup = L.layerGroup().addTo(map);
 DATA.markers.forEach(m => {
-  const popup = `<b>${m.name}</b>${m.desc ? '<br/>' + m.desc : ''}` + `<br/><a href='${navUrl(m.lat, m.lng)}' target='_blank' rel='noopener'>Click here to navigate</a>`;
-  L.marker([m.lat, m.lng], { icon: greenIcon }).bindPopup(popup).addTo(markerGroup);
+  // Build popup using DOM to avoid any in-app browser sanitisation quirks
+  const container = document.createElement('div');
+  const title = document.createElement('b');
+  title.textContent = m.name;
+  container.appendChild(title);
+  if (m.desc) {
+    const br1 = document.createElement('br');
+    container.appendChild(br1);
+    const desc = document.createElement('span');
+    desc.innerHTML = m.desc; // keep original formatting from KML
+    container.appendChild(desc);
+  }
+  const br2 = document.createElement('br');
+  container.appendChild(br2);
+  const link = document.createElement('a');
+  link.textContent = 'Click here to navigate';
+  link.href = navUrl(m.lat, m.lng);
+  // Do NOT use target=_blank to avoid in-app browser blocking; allow same-tab open
+  link.rel = 'noopener';
+  link.style.textDecoration = 'underline';
+  link.style.fontWeight = '600';
+  container.appendChild(link);
+
+  L.marker([m.lat, m.lng], { icon: greenIcon }).bindPopup(container).addTo(markerGroup);
 });
 
 // Add polylines (if any)
