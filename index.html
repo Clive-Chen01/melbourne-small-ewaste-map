@@ -151,19 +151,20 @@ locateControl.onAdd = function() {
 locateControl.addTo(map);
 
 function success(pos) {
-  window.__userLoc = { lat: latitude, lng: longitude }; // store for navigation links
   const { latitude, longitude } = pos.coords;
+  window.__userLoc = { lat: latitude, lng: longitude };
   const user = L.latLng(latitude, longitude);
   L.circleMarker(user, { radius: 7 }).addTo(map).bindPopup('You are here').openPopup();
   focusNearby({lat: latitude, lng: longitude});
 }
+
 function error(err) {
   console.warn('Geolocation error', err);
 }
 
 if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true, timeout: 8000 });
-}
+      navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true, timeout: 8000 });
+    }
 
 </script>
 </body>
