@@ -34,6 +34,15 @@ L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x
   attribution: '&copy; OpenStreetMap &copy; Carto'
 }).addTo(map);
 
+// Helper to build Google Maps directions URL
+function navUrl(lat, lng) {
+  let origin = 'Current+Location';
+  if (window.__userLoc && typeof window.__userLoc.lat === 'number') {
+    origin = `${window.__userLoc.lat},${window.__userLoc.lng}`;
+  }
+  return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${lat},${lng}`;
+}
+  
 // Marker icons
 const greenIcon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
