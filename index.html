@@ -66,6 +66,73 @@ DATA.polygons.forEach(pg => pg.rings.forEach(r => bounds.extend(L.latLngBounds(r
 if (bounds.isValid()) {
   map.fitBounds(bounds.pad(0.1));
 }
+
+// ---- Geolocate user and auto-zoom to nearby points ----
+function haversine(lat1, lon1, lat2, lon2) {
+  const toRad = d => d * Math.PI / 180;
+  const R = 6371000; // metres
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+function focusNearby(userLatLng) {
+  const distances = [];
+  markerGroup.eachLayer(layer => {
+    const ll = layer.getLatLng();
+    const d = haversine(userLatLng.lat, userLatLng.lng, ll.lat, ll.lng);
+    distances.push({layer, d});
+  });
+  distances.sort((a,b) => a.d - b.d);
+
+  const NEAR_RADIUS = 2000; // 2km
+  const near = distances.filter(x => x.d <= NEAR_RADIUS);
+  const chosen = (near.length > 0 ? near : distances.slice(0, 3));
+
+  const fit = L.latLngBounds([userLatLng]);
+  chosen.forEach(x => fit.extend(x.layer.getLatLng()));
+  if (fit.isValid()) map.fitBounds(fit.pad(0.25));
+}
+
+const locateControl = L.control({position: 'topleft'});
+locateControl.onAdd = function() {
+  const btn = L.DomUtil.create('button', 'leaflet-bar');
+  btn.title = 'Locate me';
+  btn.innerHTML = '📍';
+  btn.style.cursor = 'pointer';
+  btn.style.fontSize = '18px';
+  btn.style.width = '34px';
+  btn.style.height = '34px';
+  btn.style.lineHeight = '30px';
+  btn.style.textAlign = 'center';
+  L.DomEvent.on(btn, 'click', (e)=>{
+    e.preventDefault();
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true, timeout: 8000 });
+    }
+  });
+  return btn;
+};
+locateControl.addTo(map);
+
+function success(pos) {
+  const { latitude, longitude } = pos.coords;
+  const user = L.latLng(latitude, longitude);
+  L.circleMarker(user, { radius: 7 }).addTo(map).bindPopup('You are here').openPopup();
+  focusNearby({lat: latitude, lng: longitude});
+}
+function error(err) {
+  console.warn('Geolocation error', err);
+}
+
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true, timeout: 8000 });
+}
+
 </script>
 </body>
 </html>
